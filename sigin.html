@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Minecraft Web - Secure Login Portal">
+    <meta name="google-signin-client_id" content="YOUR_CLIENT_ID.apps.googleusercontent.com">
+    <meta property="og:image" content="https://kakaomames.github.io/rei/logo.png">
+    <link rel="icon" href="https://kakaomames.github.io/rei/logo.png">
+    <title>Minecraft Web - Sign In</title>
+    <style>
+        body { background-color: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .login-box { background: #333; padding: 40px; border: 2px solid #555; border-radius: 8px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .google-btn { background: #fff; color: #757575; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-weight: bold; border: none; display: flex; align-items: center; gap: 10px; margin-top: 20px; }
+        .google-btn:hover { background: #eee; }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <img src="https://kakaomames.github.io/rei/logo.png" width="80">
+        <h2>Minecraft Web サインイン</h2>
+        <p>Googleアカウントで世界と同期します</p>
+        
+        <button class="google-btn" id="google-login">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+            Googleでサインイン
+        </button>
+    </div>
+
+    <script>
+        document.getElementById('google-login').onclick = () => {
+            console.log("Google Auth プロセス開始...");
+            // ここでFirebase等の認証を呼び出し、完了後にリダイレクト
+            // window.location.href = 'menu.html';
+        };
+    </script>
+</body>
+</html>
