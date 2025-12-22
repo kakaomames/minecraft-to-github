@@ -23,15 +23,38 @@
     </div>
 
     <script>
-        document.getElementById('signin-btn').onclick = async () => {
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
-            
-            console.log("VercelへPOST開始...");
-            // 本来は fetch('/api/register', { method: 'POST', body: ... })
-            // 今回は遷移ロジックを優先
-            window.location.href = 'menu.html'; 
-        };
+        // Signin.html 内の <script> 部分 🚀
+document.getElementById('signin-btn').onclick = async () => {
+    const u = document.getElementById('username').value;
+    const p = document.getElementById('password').value;
+    
+    if(!u || !p) { alert("入力が足りません！"); return; }
+
+    console.log("--- 登録プロセス開始 ---");
+    console.log(`target_user:${u}`);
+
+    try {
+        const response = await fetch('https://xeroxapp032.vercel.app/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: u, password: p })
+        });
+
+        const result = await response.json();
+        // a = result.status の値を確定
+        console.log(`api_response_status:${result.status}`);
+
+        if (result.status === "success") {
+            alert("隊員登録完了！ログイン画面へ移行します。");
+            // 登録成功後の遷移
+            window.location.href = 'login.html';
+        } else {
+            alert("登録に失敗しました。GitHubの設定を確認してください。");
+        }
+    } catch (error) {
+        console.error("Connection Error:", error);
+    }
+};
     </script>
 </body>
 </html>
