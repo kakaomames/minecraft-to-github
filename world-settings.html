@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Minecraft Web - World Specific Configuration">
+    <link rel="icon" href="https://kakaomames.github.io/rei/logo.png">
+    <title>ワールド設定 - Minecraft Web</title>
+    <style>
+        body { background-color: #1a1a1a; color: white; font-family: sans-serif; padding: 40px; }
+        .config-box { max-width: 500px; margin: 0 auto; background: #333; padding: 20px; border: 2px solid #555; }
+        .field { margin-bottom: 20px; }
+        input, select { width: 100%; padding: 10px; background: #444; border: 1px solid #777; color: white; }
+        .save-btn { width: 100%; padding: 15px; background: #3c8527; border: none; color: white; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="config-box">
+        <img src="https://kakaomames.github.io/rei/logo.png" width="50" style="display: block; margin: 0 auto 20px;">
+        <h2>ワールド設定を編集</h2>
+        
+        <div class="field">
+            <label>ワールド名</label>
+            <input type="text" id="world-name" value="My World">
+        </div>
+
+        <div class="field">
+            <label>ゲームモード</label>
+            <select id="game-mode">
+                <option value="survival">サバイバル</option>
+                <option value="creative">クリエイティブ</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label>シード値</label>
+            <input type="text" id="seed" placeholder="空欄ならランダム">
+        </div>
+
+        <button class="save-btn" onclick="saveWorldSettings()">設定を保存</button>
+        <p style="text-align: center; cursor: pointer;" onclick="window.location.href='world.html'">キャンセル</p>
+    </div>
+
+    <script>
+        function saveWorldSettings() {
+            console.log("ワールド設定をVercelに同期中...");
+            window.location.href = 'world.html';
+        }
+    </script>
+</body>
+</html>
