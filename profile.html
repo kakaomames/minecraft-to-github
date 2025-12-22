@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Minecraft Web - Character Profile & Skin Creator">
+    <meta property="og:image" content="https://kakaomames.github.io/rei/logo.png">
+    <link rel="icon" href="https://kakaomames.github.io/rei/logo.png">
+    <title>更衣室 - Minecraft Web</title>
+    <style>
+        body { background-color: #1a1a1a; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .header { width: 100%; padding: 20px; background: #333; display: flex; justify-content: space-between; align-items: center; }
+        .skin-display { width: 200px; height: 350px; background: #444; margin: 40px; border: 4px solid #555; position: relative; }
+        .skin-preview { width: 100%; height: 100%; object-fit: contain; }
+        .skin-selector { display: flex; gap: 10px; overflow-x: auto; width: 90%; padding: 20px; }
+        .skin-item { width: 80px; height: 80px; background: #555; border: 2px solid #777; cursor: pointer; flex-shrink: 0; }
+        .skin-item.active { border-color: #ffcb05; }
+        .save-btn { padding: 15px 40px; background: #3c8527; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .back-btn { cursor: pointer; border: 1px solid #fff; padding: 5px 15px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="back-btn" onclick="window.location.href='menu.html'">＜ 戻る</div>
+        <h2>更衣室</h2>
+        <img src="https://kakaomames.github.io/rei/logo.png" width="40">
+    </div>
+
+    <div class="skin-display">
+        <div style="text-align: center; line-height: 350px; color: #888;">Skin Preview</div>
+    </div>
+
+    <div class="skin-selector">
+        <div class="skin-item active"></div>
+        <div class="skin-item"></div>
+        <div class="skin-item"></div>
+        <div class="skin-item"></div>
+    </div>
+
+    <button class="save-btn" onclick="saveSkin()">スキンを確定</button>
+
+    <script>
+        function saveSkin() {
+            console.log("スキンデータを同期中...");
+            window.location.href = 'menu.html';
+        }
+    </script>
+</body>
+</html>
