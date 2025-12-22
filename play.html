@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Gemini programming隊による次世代Minecraft Bedrock Edition Web。Vercel API連携済み。">
+    <meta name="keywords" content="Minecraft, Bedrock, WebGame, Vercel, Render, Python, JS">
+    <meta name="author" content="カカオマメ隊員 & Gemini Captain">
+    <meta name="robots" content="index, follow">
+    
+    <meta property="og:title" content="Minecraft Web - Project G">
+    <meta property="og:description" content="ブラウザで動く、究極の統合版マイクラ。">
+    <meta property="og:url" content="https://kakaomames.github.io/rei/">
+    <meta property="og:image" content="https://kakaomames.github.io/rei/logo.png">
+    <meta property="og:type" content="website">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Minecraft Web - Project G">
+    <meta name="twitter:image" content="https://kakaomames.github.io/rei/logo.png">
+
+    <link rel="icon" href="https://kakaomames.github.io/rei/logo.png">
+    <link rel="apple-touch-icon" href="https://kakaomames.github.io/rei/logo.png">
+
+    <title>Minecraft Web Bedrock Edition</title>
+    
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #game-container { position: relative; width: 100%; height: 100%; }
+        canvas { display: block; width: 100%; height: 100%; }
+        /* ロゴを画面端に常駐 🫡 */
+        #ui-logo { position: absolute; top: 10px; right: 10px; width: 60px; z-index: 100; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <img src="https://kakaomames.github.io/rei/logo.png" id="ui-logo" alt="Logo">
+        
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <script>
+        document.addEventListener('click', function() {
+            console.log("緊急遷移発動！次のステージへ移動します...");
+            // window.location.href = 'world_select.html'; // 実際にはここを対象.htmlに変更
+        });
+    </script>
+
+    <script src="canvas.js"></script>
+
+</body>
+</html>
