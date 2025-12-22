@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Minecraft Web Bedrock Edition - System Settings">
+    <meta name="author" content="カカオマメ隊員">
+    <meta property="og:title" content="Settings - Project G">
+    <meta property="og:image" content="https://kakaomames.github.io/rei/logo.png">
+    <link rel="icon" href="https://kakaomames.github.io/rei/logo.png">
+    <title>設定 - Minecraft Web</title>
+    <style>
+        body { background-color: #1a1a1a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; }
+        /* 左側のタブメニュー */
+        .sidebar { width: 200px; background-color: #333; height: 100vh; border-right: 2px solid #555; }
+        .tab { padding: 20px; cursor: pointer; border-bottom: 1px solid #444; text-align: center; }
+        .tab:hover, .active { background-color: #4a4a4a; }
+        /* 右側の設定項目 */
+        .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
+        .setting-item { margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .slider { width: 100%; cursor: pointer; }
+        .back-btn { position: fixed; top: 10px; left: 10px; padding: 10px; background: #4a4a4a; border: 1px solid #fff; cursor: pointer; z-index: 100; }
+    </style>
+</head>
+<body>
+
+    <div class="back-btn" onclick="window.location.href='menu.html'">＜ 戻る</div>
+
+    <div class="sidebar">
+        <div style="padding: 20px; text-align: center;">
+            <img src="https://kakaomames.github.io/rei/logo.png" width="60">
+        </div>
+        <div class="tab active">ビデオ</div>
+        <div class="tab">オーディオ</div>
+        <div class="tab">操作設定</div>
+    </div>
+
+    <div class="main-content">
+        <h1>設定</h1>
+        
+        <div class="setting-item">
+            <label>描画距離 (チャンク): <span id="dist-val">12</span></label><br>
+            <input type="range" min="4" max="32" value="12" class="slider" id="render-dist">
+        </div>
+
+        <div class="setting-item">
+            <label>明るさ: <span id="bright-val">50</span>%</label><br>
+            <input type="range" min="0" max="100" value="50" class="slider" id="brightness">
+        </div>
+
+        <div class="setting-item">
+            <button id="save-btn" style="padding: 10px 20px; background: #3c8527; color: white; border: none; cursor: pointer;">設定を保存して同期</button>
+        </div>
+    </div>
+
+    <script>
+        // スライダーの値表示更新
+        document.getElementById('render-dist').oninput = function() { document.getElementById('dist-val').innerText = this.value; };
+        document.getElementById('brightness').oninput = function() { document.getElementById('bright-val').innerText = this.value; };
+
+        // 保存ボタン（Vercel/Renderへの通信を想定）
+        document.getElementById('save-btn').onclick = function() {
+            const settings = {
+                dist: document.getElementById('render-dist').value,
+                bright: document.getElementById('brightness').value
+            };
+            print("Settings saved:", settings);
+            // ここでPythonバックエンドを叩く
+        };
+
+        function print(msg, obj) { console.log(msg, JSON.stringify(obj)); }
+    </script>
+</body>
+</html>
