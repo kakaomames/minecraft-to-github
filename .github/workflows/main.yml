@@ -1,0 +1,19 @@
+name: Minecraft Server Engine
+on:
+  repository_dispatch:
+    types: [start_minecraft]
+
+jobs:
+  run-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚀 サーバー起動準備
+        run: |
+          echo "Gemini programming隊、サーバーを起動します！"
+          # サーバーをダウンロード（動作確認用の軽量版）
+          curl -O https://piston-data.mojang.com/v1/objects/84194a2f286cf1ad3128fa593d304f53c7113456/server.jar
+          echo "eula=true" > eula.txt
+          
+          # ポケモンクエストのように「しゅっぱつ」！
+          # メモリ4GB割り当て（GitHub Actionsの限界に近いパワーだ！）
+          java -Xmx4G -Xms4G -jar server.jar nogui
