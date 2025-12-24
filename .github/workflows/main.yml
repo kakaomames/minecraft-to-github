@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: 🚀 サーバー起動＆トンネル開通
         run: |
-          echo "Gemini programming隊、playit接続フェーズ開始！"
+          echo "Gemini programming隊、playit最終接続フェーズ！"
           
           # 1. サーバー本体の準備
           curl -o server.jar https://api.papermc.io/v2/projects/paper/versions/1.20.1/builds/196/downloads/paper-1.20.1-196.jar
@@ -19,13 +19,16 @@ jobs:
           curl -SsL -o playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
           chmod +x playit
 
-          # 3. playitをバックグラウンドで起動
-          # これでサイト側の「Waiting...」が「Connected」に変わるはずだ！
+          # 3. playitの起動（サブコマンドなしで直接バックグラウンド起動）
           echo "トンネル接続を開始します..."
-          ./playit run & 
+          ./playit > playit_log.txt 2>&1 & 
           
-          # 4. 少し待ってからマイクラサーバー起動
-          sleep 10
+          # 4. 少し待ってログからURLを確認（まだ未登録の場合用）
+          sleep 5
+          echo "--- playit ログ確認 ---"
+          cat playit_log.txt | grep "https://playit.gg/claim/" || echo "すでに登録済みか、URL生成待ちです"
+          echo "----------------------"
+          
+          # 5. マイクラサーバー起動
           echo "マイクラサーバーを起動します！"
           java -Xmx7G -Xms7G -jar server.jar nogui
-          help
