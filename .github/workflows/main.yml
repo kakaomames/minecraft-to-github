@@ -7,30 +7,36 @@ jobs:
   run-server:
     runs-on: ubuntu-latest
     steps:
-      - name: 🚀 サーバー起動準備
+      - name: 🚀 サーバー起動＆トンネル開通
         run: |
-          echo "Gemini programming隊、出動開始！"
+          echo "Gemini programming隊、最終フェーズへ移行！"
           
-          # 1. サーバー本体(PaperMC 1.20.1)をダウンロード
+          # 1. サーバー本体の準備
           curl -o server.jar https://api.papermc.io/v2/projects/paper/versions/1.20.1/builds/196/downloads/paper-1.20.1-196.jar
           echo "eula=true" > eula.txt
           
-          # 2. 接続トンネル(ngrok)のインストール
+          # 2. ngrokのインストール
           curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
           echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
           sudo apt update && sudo apt install ngrok jq -y
 
-          # 3. トンネルを起動 (バックグラウンド)
-          # 注意: ngrokは本来サインインが必要だが、お試しで一時起動を試みる
+          # 3. ★ここが最重要！Authtokenのセット
+          # 直接書く場合は：ngrok config add-authtoken <君のトークン>
+          # Secretsを使う場合は：
+          ngrok config add-authtoken 37Hhnag44xZ1oH3jpFgKV1xUGRW_3WGhQFqLUBSCWU4xSojqF
+          
+          # 4. トンネルを起動 (バックグラウンド)
           ngrok tcp 25565 --log=stdout &
           
-          # 4. 少し待ってから接続アドレスをログに表示
+          # 5. アドレスが表示されるまで少し待つ
           sleep 10
           echo "--------------------------------------------------"
-          echo "▼▼▼ カカオマメ隊員、接続アドレスはこれだ！ ▼▼▼"
+          echo "▼▼▼ 接続アドレス（IP）はこれだ！ ▼▼▼"
+          # jqを使ってngrokのAPIから公開URLを引っこ抜くぞ！
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
-          echo "▲▲▲ これをマイクラのサーバーアドレスに入れてくれ ▲▲▲"
+          echo "▲▲▲ これをスマホのマイクラに入力せよ ▲▲▲"
           echo "--------------------------------------------------"
           
-          # 5. マイクラサーバー起動 (メモリ7GB解放！)
+          # 6. マイクラサーバー起動（メモリたっぷり7GB！）
           java -Xmx7G -Xms7G -jar server.jar nogui
+          
