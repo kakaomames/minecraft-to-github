@@ -7,26 +7,25 @@ jobs:
   run-server:
     runs-on: ubuntu-latest
     steps:
-      - name: 🚀 サーバー起動＆トンネル(playit)開通
+      - name: 🚀 サーバー起動＆トンネル開通
         run: |
-          echo "Gemini programming隊、playit.ggで作戦再開！"
+          echo "Gemini programming隊、playit直接起動作戦開始！"
           
           # 1. サーバー本体の準備
           curl -o server.jar https://api.papermc.io/v2/projects/paper/versions/1.20.1/builds/196/downloads/paper-1.20.1-196.jar
           echo "eula=true" > eula.txt
           
-          # 2. playit.ggのインストール
-          curl -SsL https://playit-cloud.github.io/ppa/key.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/playit.gpg
-          echo "deb [signed-by=/etc/apt/trusted.gpg.d/playit.gpg] https://playit-cloud.github.io/ppa/data-postgresql /" | sudo tee /etc/apt/sources.list.d/playit-cloud.list
-          sudo apt update && sudo apt install playit -y
+          # 2. playit本体を直接ダウンロードして実行権限を与える
+          curl -SsL -o playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
+          chmod +x playit
 
-          # 3. playitの起動 (シークレットを使わず、まずはセットアップ用URLを表示させる)
+          # 3. playitをセットアップモードで起動（1回きり）
           echo "--------------------------------------------------"
-          echo "▼▼▼ カカオマメ隊員、以下のURLをスマホで開いて設定せよ！ ▼▼▼"
-          # バックグラウンドで起動し、最初のセットアップ用ログが出るまで待つ
-          playit setup --once || true
-          echo "▲▲▲ 上記URLでAgentを登録したら、もう一度実行だ！ ▲▲▲"
+          echo "▼▼▼ カカオマメ隊員、この下のURLをスマホで開け！ ▼▼▼"
+          # バックグラウンドで動かして、URLが出るまで少し待つ
+          ./playit setup --once || true
+          echo "▲▲▲ 登録が終わったら、もう一度「しゅっぱつ」だ！ ▲▲▲"
           echo "--------------------------------------------------"
           
-          # 4. マイクラサーバー起動（ここから先は前のままだ！）
+          # 4. マイクラサーバー起動
           java -Xmx7G -Xms7G -jar server.jar nogui
