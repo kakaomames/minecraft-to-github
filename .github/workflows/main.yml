@@ -9,23 +9,23 @@ jobs:
     steps:
       - name: 🚀 サーバー起動＆トンネル開通
         run: |
-          echo "Gemini programming隊、playitセットアップ開始！"
+          echo "Gemini programming隊、playit接続フェーズ開始！"
           
           # 1. サーバー本体の準備
           curl -o server.jar https://api.papermc.io/v2/projects/paper/versions/1.20.1/builds/196/downloads/paper-1.20.1-196.jar
           echo "eula=true" > eula.txt
           
-          # 2. playit本体のダウンロードと権限付与
+          # 2. playit本体の準備
           curl -SsL -o playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
           chmod +x playit
 
-          # 3. playitのセットアップ
-          echo "--------------------------------------------------"
-          echo "▼▼▼ カカオマメ隊員、この下のURLをスマホで開け！ ▼▼▼"
-          # タイムアウトを設定して、URLを表示させてから次に進むようにしたぞ
-          timeout 30s ./playit setup || true
-          echo "▲▲▲ URLが表示されない場合は報告せよ！ ▲▲▲"
-          echo "--------------------------------------------------"
+          # 3. playitをバックグラウンドで起動
+          # これでサイト側の「Waiting...」が「Connected」に変わるはずだ！
+          echo "トンネル接続を開始します..."
+          ./playit run & 
           
-          # 4. マイクラサーバー起動
+          # 4. 少し待ってからマイクラサーバー起動
+          sleep 10
+          echo "マイクラサーバーを起動します！"
           java -Xmx7G -Xms7G -jar server.jar nogui
+          help
