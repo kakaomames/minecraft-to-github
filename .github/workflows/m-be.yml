@@ -45,6 +45,7 @@ jobs:
           cp -r ./worlds ./bds/ 2>/dev/null || echo "No worlds folder found in repo."
           
           echo "Status: All components assembled in ./bds ✅"
+          ls -R ./
           ls -R ./bds
           echo "==== [STEP 2 COMPLETE] ✅ ===="
 
