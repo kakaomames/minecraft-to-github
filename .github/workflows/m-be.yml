@@ -8,6 +8,10 @@ jobs:
   run-server:
     runs-on: ubuntu-latest
     steps:
+      # --- STEP 0: これが最重要！リポジトリのファイルを持ってくる ---
+      - name: "Step 0: 📂 リポジトリのチェックアウト"
+        uses: actions/checkout@v4
+
       # --- STEP 1: 環境整備 ---
       - name: "Step 1: 🏗️ 基礎インフラの整備"
         run: |
@@ -20,33 +24,44 @@ jobs:
       - name: "Step 2: 📦 実行ファイルの奪取 & フォルダ構築"
         run: |
           echo "==== [STEP 2 START] ===="
-          # 1. サーバー実行用ディレクトリ作成
+          echo "Current Path: $(pwd)"
+          echo "--- Repository File List ---"
+          ls -R
+          echo "----------------------------"
+          
           mkdir -p bds
           
-          # 2. Python工作員によるバイナリ奪取 (188MB)
+          # Python工作員によるバイナリ奪取
           FILE_ID="16OlbXH73OzxJvUd80k0ARC0wAzgNm5_-"
           python3 - <<EOF
           import requests, re, os
           session = requests.Session()
           url = f"https://drive.google.com/uc?export=download&id=${FILE_ID}"
           res = session.get(url)
-          token = re.search(r'name="confirm" value="([^"]+)"', res.text).group(1)
-          final_res = session.get("https://drive.usercontent.google.com/download", params={'id': '${FILE_ID}', 'export': 'download', 'confirm': token}, stream=True)
+          token_match = re.search(r'name="confirm" value="([^"]+)"', res.text)
+          confirm_token = token_match.group(1) if token_match else "t"
+          print(f"Token: {confirm_token}")
+          final_res = session.get("https://drive.usercontent.google.com/download", params={'id': '${FILE_ID}', 'export': 'download', 'confirm': confirm_token}, stream=True)
           with open("bds/bedrock_server", "wb") as f:
               for chunk in final_res.iter_content(chunk_size=8192): f.write(chunk)
           EOF
           
-          # 3. 権限付与
           chmod +x ./bds/bedrock_server
           
-          # 4. リポジトリの config/ と worlds/ を bds/ 内に展開
-          echo "Status: Deploying repository configs and worlds..."
-          cp -r ./config/* ./bds/ 2>/dev/null || echo "No config files found in repo."
-          cp -r ./worlds ./bds/ 2>/dev/null || echo "No worlds folder found in repo."
+          # リポジトリの config/ と worlds/ を bds/ 内に確実に展開
+          echo "Status: Deploying repository configs..."
+          if [ -d "./config" ]; then
+            cp -rv ./config/* ./bds/
+            echo "Status: Config files deployed ✅"
+          else
+            echo "⚠️ WARNING: 'config' folder not found. Server may fail."
+          fi
+
+          if [ -d "./worlds" ]; then
+            cp -rv ./worlds ./bds/
+            echo "Status: Worlds folder deployed ✅"
+          fi
           
-          echo "Status: All components assembled in ./bds ✅"
-          ls -R ./
-          ls -R ./bds
           echo "==== [STEP 2 COMPLETE] ✅ ===="
 
       # --- STEP 3: 通信兵(playit.gg)の配備 ---
@@ -70,7 +85,7 @@ jobs:
             ./playit --secret "$PLAYIT_SECRET" > playit_log.txt 2>&1 &
           fi
           sleep 10
-          cat playit_log.txt | grep -E "https://playit.gg/claim/|connected" || echo "Status: Waiting for connection..."
+          cat playit_log.txt | grep -E "https://playit.gg/claim/|connected" || echo "Status: Waiting..."
           echo "==== [STEP 4 COMPLETE] ✅ ===="
 
       # --- STEP 5: サーバー最終起動 ---
@@ -78,11 +93,8 @@ jobs:
         working-directory: ./bds
         run: |
           echo "==== [STEP 5 START] ===="
-          echo "Current Directory: $(pwd)"
-          echo "Files in current dir: $(ls)"
-          
-          # 実行！
+          # 最終確認
+          ls -F
           echo "Executing: LD_LIBRARY_PATH=. ./bedrock_server"
           LD_LIBRARY_PATH=. ./bedrock_server
-          
           echo "==== [STEP 5 FINISHED] 🏁 ===="
