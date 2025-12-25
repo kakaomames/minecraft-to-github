@@ -16,32 +16,40 @@ jobs:
           echo "Status: OS dependencies installed ✅"
           echo "==== [STEP 1 COMPLETE] ✅ ===="
 
-      # --- STEP 2: カスタムサーバー準備 (直接ダウンロード) ---
-# --- STEP 2: カスタムサーバー準備 (警告突破ダウンロード) ---
-      - name: "Step 2: 📦 実行ファイルの直接取得（警告突破）"
+# --- STEP 2: カスタムサーバー準備 (パラメータ直撃突破) ---
+      - name: "Step 2: 📦 実行ファイルの直接取得（強行突破）"
         run: |
           echo "==== [STEP 2 START] ===="
           FILE_ID="16OlbXH73OzxJvUd80k0ARC0wAzgNm5_-"
-          echo "FILE_ID: ${FILE_ID}"
+          
+          # HTMLにあったフォーム内容を元にURLを再構築
+          # confirm=t を最初から付与することで警告をバイパスします
+          DIRECT_URL="https://drive.google.com/uc?export=download&id=${FILE_ID}&confirm=t"
+          echo "DIRECT_URL: ${DIRECT_URL}"
           
           mkdir -p bds
           
-          # 1. クッキーを取得して確認用トークン(confirm)を抽出
-          echo "Status: Fetching confirm token..."
-          CONFIRM=$(curl -sc /tmp/gcookie "https://drive.google.com/uc?export=download&id=${FILE_ID}" | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1/p')
-          echo "CONFIRM_TOKEN: ${CONFIRM}"
+          # -L はリダイレクト追跡、-c はクッキー保存（念のため）
+          echo "Status: Downloading with confirm=t..."
+          curl -L -c /tmp/drive_cookie "${DIRECT_URL}" -o ./bds/bedrock_server
           
-          # 2. トークンを使用して本番ダウンロード
-          echo "Status: Downloading actual binary..."
-          curl -Lb /tmp/gcookie "https://drive.google.com/uc?export=download&confirm=${CONFIRM}&id=${FILE_ID}" -o ./bds/bedrock_server
-          
-          # 3. 実行権限を付与
+          # 実行権限を付与
           chmod +x ./bds/bedrock_server
           
           echo "Status: Download complete ✅"
-          echo "File info check (Should not be HTML):"
-          head -c 50 ./bds/bedrock_server
-          echo ""
+          
+          # 【重要】ファイルがHTMLでないかチェック
+          echo "Checking file type (First 10 characters):"
+          check_content=$(head -c 10 ./bds/bedrock_server)
+          echo "File Content Start: ${check_content}"
+          
+          if [[ "$check_content" == *"<!"* ]]; then
+            echo "❌ ERROR: Still downloaded HTML... Needs cookie-based approach."
+            exit 1
+          else
+            echo "✅ SUCCESS: Binary file detected!"
+          fi
+          
           ls -lh ./bds/bedrock_server
           echo "==== [STEP 2 COMPLETE] ✅ ===="
 
