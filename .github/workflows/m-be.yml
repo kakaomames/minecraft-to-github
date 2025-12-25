@@ -1,4 +1,4 @@
-name: Minecraft Server-Engine
+name: Minecraft Server Engine
 
 on:
   repository_dispatch:
@@ -20,35 +20,20 @@ jobs:
           echo "Status: OS dependencies installed ✅"
           echo "==== [STEP 1 COMPLETE] ✅ ===="
 
-      # --- STEP 2: 公式ベース ＋ カスタムバイナリの合体 ---
-      - name: "Step 2: 📦 サーバー環境の完全構築"
+      # --- STEP 2: 公式サーバーのセットアップ ---
+      - name: "Step 2: 📦 公式最新サーバーの取得"
         run: |
           echo "==== [STEP 2 START] ===="
-          # 1. 提供された公式URLからベースセットをダウンロード
+          # 提供された公式URLを使用
           OFFICIAL_URL="https://www.minecraft.net/bedrockdedicatedserver/bin-linux/bedrock-server-1.21.131.1.zip"
-          echo "OFFICIAL_URL: ${OFFICIAL_URL}"
           
-          # User-Agentを指定しないと拒否される場合があるため追加
-          curl -L -A "Mozilla/5.0" -o official_bds.zip "${OFFICIAL_URL}"
-          unzip official_bds.zip -d bds
-          echo "Status: Official base files extracted ✅"
-
-          # 2. 隊員のカスタムバイナリ(188MB)で上書き
-          FILE_ID="16OlbXH73OzxJvUd80k0ARC0wAzgNm5_-"
-          python3 - <<EOF
-          import requests, re, os
-          session = requests.Session()
-          res = session.get(f"https://drive.google.com/uc?export=download&id=${FILE_ID}")
-          token_match = re.search(r'name="confirm" value="([^"]+)"', res.text)
-          confirm_token = token_match.group(1) if token_match else "t"
-          final_res = session.get("https://drive.usercontent.google.com/download", params={'id': '${FILE_ID}', 'export': 'download', 'confirm': confirm_token}, stream=True)
-          with open("bds/bedrock_server", "wb") as f:
-              for chunk in final_res.iter_content(chunk_size=8192): f.write(chunk)
-          EOF
+          curl -L -A "Mozilla/5.0" -o bds.zip "${OFFICIAL_URL}"
+          mkdir -p bds
+          unzip bds.zip -d bds
           chmod +x ./bds/bedrock_server
-          echo "Status: Custom binary (1.21.102.1) deployed over base ✅"
-
-          # 3. リポジトリの config/ と worlds/ を配備
+          
+          # リポジトリ内の設定とワールドを上書き
+          echo "Status: Deploying configs from repository..."
           cp -rv ./config/* ./bds/ 2>/dev/null || true
           cp -rv ./worlds ./bds/ 2>/dev/null || true
           
@@ -75,17 +60,18 @@ jobs:
             ./playit --secret "$PLAYIT_SECRET" > playit_log.txt 2>&1 &
           fi
           sleep 12
-          cat playit_log.txt | grep -E "https://playit.gg/claim/|connected" || echo "Status: Waiting for playit connection..."
+          cat playit_log.txt | grep -E "https://playit.gg/claim/|connected" || echo "Status: Processing..."
           echo "==== [STEP 4 COMPLETE] ✅ ===="
 
       # --- STEP 5: サーバー最終起動 ---
-      - name: "Step 5: 🎮 Minecraft Bedrock Server 起動！"
+      - name: "Step 5: 🎮 カカオサーバー 起動！"
         working-directory: ./bds
         run: |
           echo "==== [STEP 5 START] ===="
-          # 起動前にファイル構成をデバッグ出力
+          # 最終構成確認
           ls -F
           
+          # 公式バイナリで起動！
           echo "Executing: LD_LIBRARY_PATH=. ./bedrock_server"
           LD_LIBRARY_PATH=. ./bedrock_server
           echo "==== [STEP 5 FINISHED] 🏁 ===="
