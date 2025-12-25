@@ -8,56 +8,79 @@ jobs:
   run-server:
     runs-on: ubuntu-latest
     steps:
-      - name: 🚀 カスタムサーバー起動＆トンネル開通
-        env:
-          PLAYIT_SECRET: ${{ secrets.PLAYIT_SECRET }}
+      # --- STEP 1: 環境整備 ---
+      - name: "Step 1: 🏗️ 基礎インフラの整備"
         run: |
-          echo "Gemini programming隊、カスタムサーバー展開フェーズ開始！ 🫡"
+          echo "==== [STEP 1 START] ===="
+          echo "Action: Installing OS dependencies..."
+          sudo apt-get update && sudo apt-get install -y libcurl4 curl unzip
           
-          # 1. 依存ライブラリのインストール
-          sudo apt-get update && sudo apt-get install -y libcurl4
-          echo "Status: OS dependencies installed ✅"
+          working_dir=$(pwd)
+          echo "working_dir: ${working_dir}"
+          echo "==== [STEP 1 COMPLETE] ✅ ===="
+
+      # --- STEP 2: カスタムサーバー準備 ---
+      - name: "Step 2: 📦 カスタムサーバーのダウンロード・解凍"
+        run: |
+          echo "==== [STEP 2 START] ===="
+          # 隊員提供のIDを使用して、より安定したURLを構築
+          FILE_ID="16OlbXH73OzxJvUd80k0ARC0wAzgNm5_-"
+          DOWNLOAD_URL="https://drive.google.com/uc?export=download&id=${FILE_ID}"
+          echo "DOWNLOAD_URL: ${DOWNLOAD_URL}"
           
-          # 2. カスタムBedrockサーバーのダウンロード
-          # 隊員から提供されたURLを使用
-          BDS_DRIVE_URL="https://drive.usercontent.google.com/download?id=16OlbXH73OzxJvUd80k0ARC0wAzgNm5_-&export=download&confirm=t"
-          echo "BDS_DRIVE_URL: ${BDS_DRIVE_URL}"
+          # ダウンロード実行
+          curl -L -o bds_custom.zip "${DOWNLOAD_URL}"
+          echo "Status: Download finished."
           
-          # 警告をバイパスしてダウンロードを試行
-          curl -L -o bds_custom.zip "${BDS_DRIVE_URL}"
-          
-          # 解凍
+          # 解凍フェーズ
           mkdir -p bds
           unzip bds_custom.zip -d bds
           chmod +x ./bds/bedrock_server
-          echo "Status: Custom Bedrock Server extracted ✅"
-          
-          # 3. playit本体の準備
-          PLAYIT_URL="https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64"
-          echo "PLAYIT_URL: ${PLAYIT_URL}"
-          
-          curl -SsL -o playit ${PLAYIT_URL}
-          chmod +x playit
-          echo "Status: playit-agent prepared ✅"
+          echo "Status: Server binary path is ./bds/bedrock_server"
+          echo "==== [STEP 2 COMPLETE] ✅ ===="
 
-          # 4. playitの起動
-          echo "トンネル接続を開始します..."
+      # --- STEP 3: 通信兵(playit.gg)の配備 ---
+      - name: "Step 3: 🌐 playit.ggトンネル兵の配備"
+        run: |
+          echo "==== [STEP 3 START] ===="
+          PLAYIT_DL_URL="https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64"
+          echo "PLAYIT_DL_URL: ${PLAYIT_DL_URL}"
+          
+          curl -SsL -o playit ${PLAYIT_DL_URL}
+          chmod +x playit
+          
+          playit_version=$(./playit --version)
+          echo "playit_version: ${playit_version}"
+          echo "==== [STEP 3 COMPLETE] ✅ ===="
+
+      # --- STEP 4: トンネル開通(バックグラウンド) ---
+      - name: "Step 4: ⚡ トンネル開通＆シークレット認証"
+        env:
+          PLAYIT_SECRET: ${{ secrets.PLAYIT_SECRET }}
+        run: |
+          echo "==== [STEP 4 START] ===="
           if [ -z "$PLAYIT_SECRET" ]; then
-            echo "Status: No secret found. Starting in setup mode."
+            echo "Mode: [INITIAL SETUP] - No secret found in GitHub Secrets."
             ./playit > playit_log.txt 2>&1 &
           else
-            echo "Status: Secret found. Authenticating..."
+            echo "Mode: [AUTHENTICATED] - Using PLAYIT_SECRET."
             ./playit --secret "$PLAYIT_SECRET" > playit_log.txt 2>&1 &
           fi
           
-          # 5. 待機とログ確認
-          sleep 5
-          echo "--- playit status ---"
-          cat playit_log.txt | grep "https://playit.gg/claim/" || echo "Running..."
-          echo "---------------------"
+          sleep 8 # 接続待ち
+          echo "--- Playit Connection Logs ---"
+          cat playit_log.txt | grep -E "https://playit.gg/claim/|connected" || echo "Status: Processing..."
+          echo "------------------------------"
+          echo "==== [STEP 4 COMPLETE] ✅ ===="
+
+      # --- STEP 5: サーバー最終起動 ---
+      - name: "Step 5: 🎮 Minecraft Bedrock Server 起動！"
+        run: |
+          echo "==== [STEP 5 START] ===="
+          echo "Command: LD_LIBRARY_PATH=. ./bedrock_server"
           
-          # 6. カスタムサーバー起動
-          echo "カスタムマイクラサーバー(BDS)を起動します！"
           cd bds
-          # もし実行ファイル名が異なる場合はここを調整
+          # サーバーを起動
           LD_LIBRARY_PATH=. ./bedrock_server
+          
+          echo "==== [STEP 5 FINISHED] 🏁 ===="
