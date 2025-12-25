@@ -2,7 +2,7 @@ name: Minecraft Server Engine
 
 on:
   repository_dispatch:
-    types: [start_minecraft]
+    types: [start_beminecraft]
 
 jobs:
   run-server:
