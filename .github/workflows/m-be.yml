@@ -1,4 +1,4 @@
-name: Minecraft Server Engine
+name: Minecraft Server-Engine
 
 on:
   repository_dispatch:
@@ -8,7 +8,7 @@ jobs:
   run-server:
     runs-on: ubuntu-latest
     steps:
-      # --- STEP 0: これが最重要！リポジトリのファイルを持ってくる ---
+      # --- STEP 0: リポジトリのチェックアウト ---
       - name: "Step 0: 📂 リポジトリのチェックアウト"
         uses: actions/checkout@v4
 
@@ -20,47 +20,37 @@ jobs:
           echo "Status: OS dependencies installed ✅"
           echo "==== [STEP 1 COMPLETE] ✅ ===="
 
-      # --- STEP 2: カスタムサーバー準備 & 構造構築 ---
-      - name: "Step 2: 📦 実行ファイルの奪取 & フォルダ構築"
+      # --- STEP 2: 公式ベース ＋ カスタムバイナリの合体 ---
+      - name: "Step 2: 📦 サーバー環境の完全構築"
         run: |
           echo "==== [STEP 2 START] ===="
-          echo "Current Path: $(pwd)"
-          echo "--- Repository File List ---"
-          ls -R
-          echo "----------------------------"
+          # 1. 提供された公式URLからベースセットをダウンロード
+          OFFICIAL_URL="https://www.minecraft.net/bedrockdedicatedserver/bin-linux/bedrock-server-1.21.131.1.zip"
+          echo "OFFICIAL_URL: ${OFFICIAL_URL}"
           
-          mkdir -p bds
-          
-          # Python工作員によるバイナリ奪取
+          # User-Agentを指定しないと拒否される場合があるため追加
+          curl -L -A "Mozilla/5.0" -o official_bds.zip "${OFFICIAL_URL}"
+          unzip official_bds.zip -d bds
+          echo "Status: Official base files extracted ✅"
+
+          # 2. 隊員のカスタムバイナリ(188MB)で上書き
           FILE_ID="16OlbXH73OzxJvUd80k0ARC0wAzgNm5_-"
           python3 - <<EOF
           import requests, re, os
           session = requests.Session()
-          url = f"https://drive.google.com/uc?export=download&id=${FILE_ID}"
-          res = session.get(url)
+          res = session.get(f"https://drive.google.com/uc?export=download&id=${FILE_ID}")
           token_match = re.search(r'name="confirm" value="([^"]+)"', res.text)
           confirm_token = token_match.group(1) if token_match else "t"
-          print(f"Token: {confirm_token}")
           final_res = session.get("https://drive.usercontent.google.com/download", params={'id': '${FILE_ID}', 'export': 'download', 'confirm': confirm_token}, stream=True)
           with open("bds/bedrock_server", "wb") as f:
               for chunk in final_res.iter_content(chunk_size=8192): f.write(chunk)
           EOF
-          
           chmod +x ./bds/bedrock_server
-          
-          # リポジトリの config/ と worlds/ を bds/ 内に確実に展開
-          echo "Status: Deploying repository configs..."
-          if [ -d "./config" ]; then
-            cp -rv ./config/* ./bds/
-            echo "Status: Config files deployed ✅"
-          else
-            echo "⚠️ WARNING: 'config' folder not found. Server may fail."
-          fi
+          echo "Status: Custom binary (1.21.102.1) deployed over base ✅"
 
-          if [ -d "./worlds" ]; then
-            cp -rv ./worlds ./bds/
-            echo "Status: Worlds folder deployed ✅"
-          fi
+          # 3. リポジトリの config/ と worlds/ を配備
+          cp -rv ./config/* ./bds/ 2>/dev/null || true
+          cp -rv ./worlds ./bds/ 2>/dev/null || true
           
           echo "==== [STEP 2 COMPLETE] ✅ ===="
 
@@ -84,8 +74,8 @@ jobs:
           else
             ./playit --secret "$PLAYIT_SECRET" > playit_log.txt 2>&1 &
           fi
-          sleep 10
-          cat playit_log.txt | grep -E "https://playit.gg/claim/|connected" || echo "Status: Waiting..."
+          sleep 12
+          cat playit_log.txt | grep -E "https://playit.gg/claim/|connected" || echo "Status: Waiting for playit connection..."
           echo "==== [STEP 4 COMPLETE] ✅ ===="
 
       # --- STEP 5: サーバー最終起動 ---
@@ -93,8 +83,9 @@ jobs:
         working-directory: ./bds
         run: |
           echo "==== [STEP 5 START] ===="
-          # 最終確認
+          # 起動前にファイル構成をデバッグ出力
           ls -F
+          
           echo "Executing: LD_LIBRARY_PATH=. ./bedrock_server"
           LD_LIBRARY_PATH=. ./bedrock_server
           echo "==== [STEP 5 FINISHED] 🏁 ===="
