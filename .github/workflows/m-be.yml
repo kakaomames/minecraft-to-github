@@ -12,73 +12,47 @@ jobs:
       - name: "Step 1: 🏗️ 基礎インフラの整備"
         run: |
           echo "==== [STEP 1 START] ===="
-          sudo apt-get update && sudo apt-get install -y libcurl4 curl
+          sudo apt-get update && sudo apt-get install -y libcurl4 curl unzip
           echo "Status: OS dependencies installed ✅"
           echo "==== [STEP 1 COMPLETE] ✅ ===="
 
-# --- STEP 2: カスタムサーバー準備 (Pythonトークン奪取作戦) ---
-      - name: "Step 2: 📦 実行ファイルの奪取（Python解析モード）"
+      # --- STEP 2: カスタムサーバー準備 & 構造構築 ---
+      - name: "Step 2: 📦 実行ファイルの奪取 & フォルダ構築"
         run: |
           echo "==== [STEP 2 START] ===="
-          FILE_ID="16OlbXH73OzxJvUd80k0ARC0wAzgNm5_-"
-          echo "FILE_ID: ${FILE_ID}"
-
-          # Pythonスクリプト実行
-          python3 - <<EOF
-          import requests
-          import re
-          import os
-
-          file_id = "${FILE_ID}"
-          print(f"Target File ID: {file_id}")
-
-          session = requests.Session()
-          url = f"https://drive.google.com/uc?export=download&id={file_id}"
-          response = session.get(url)
-
-          confirm_match = re.search(r'name="confirm" value="([^"]+)"', response.text)
+          # 1. サーバー実行用ディレクトリ作成
+          mkdir -p bds
           
-          if confirm_match:
-              confirm_token = confirm_match.group(1)
-              print(f"confirm_token: {confirm_token}")
-              
-              download_url = "https://drive.usercontent.google.com/download"
-              params = {'id': file_id, 'export': 'download', 'confirm': confirm_token}
-              
-              print("Status: Starting binary download...")
-              final_res = session.get(download_url, params=params, stream=True)
-              
-              os.makedirs("bds", exist_ok=True)
-              with open("bds/bedrock_server", "wb") as f:
-                  for chunk in final_res.iter_content(chunk_size=8192):
-                      f.write(chunk)
-              print("Status: Binary saved to ./bds/bedrock_server ✅")
-          else:
-              print("❌ ERROR: Confirm token not found!")
-              exit(1)
+          # 2. Python工作員によるバイナリ奪取 (188MB)
+          FILE_ID="16OlbXH73OzxJvUd80k0ARC0wAzgNm5_-"
+          python3 - <<EOF
+          import requests, re, os
+          session = requests.Session()
+          url = f"https://drive.google.com/uc?export=download&id=${FILE_ID}"
+          res = session.get(url)
+          token = re.search(r'name="confirm" value="([^"]+)"', res.text).group(1)
+          final_res = session.get("https://drive.usercontent.google.com/download", params={'id': '${FILE_ID}', 'export': 'download', 'confirm': token}, stream=True)
+          with open("bds/bedrock_server", "wb") as f:
+              for chunk in final_res.iter_content(chunk_size=8192): f.write(chunk)
           EOF
-
-          # 実行権限を付与
+          
+          # 3. 権限付与
           chmod +x ./bds/bedrock_server
           
-          echo "Status: Verifying file content..."
-          # エスケープを確実にするため、変数を分けずに直接判定
-          if head -c 10 ./bds/bedrock_server | grep -q "<!"; then
-            echo "❌ CRITICAL ERROR: File is still HTML! Aborting."
-            exit 1
-          else
-            echo "✅ SUCCESS: Binary file verified! (Not HTML)"
-          fi
+          # 4. リポジトリの config/ と worlds/ を bds/ 内に展開
+          echo "Status: Deploying repository configs and worlds..."
+          cp -r ./config/* ./bds/ 2>/dev/null || echo "No config files found in repo."
+          cp -r ./worlds ./bds/ 2>/dev/null || echo "No worlds folder found in repo."
           
-          ls -lh ./bds/bedrock_server
+          echo "Status: All components assembled in ./bds ✅"
+          ls -R ./bds
           echo "==== [STEP 2 COMPLETE] ✅ ===="
 
       # --- STEP 3: 通信兵(playit.gg)の配備 ---
       - name: "Step 3: 🌐 playit.ggトンネル兵の配備"
         run: |
           echo "==== [STEP 3 START] ===="
-          PLAYIT_DL_URL="https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64"
-          curl -SsL -o playit ${PLAYIT_DL_URL}
+          curl -SsL -o playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
           chmod +x playit
           echo "Status: playit-agent ready ✅"
           echo "==== [STEP 3 COMPLETE] ✅ ===="
@@ -94,16 +68,20 @@ jobs:
           else
             ./playit --secret "$PLAYIT_SECRET" > playit_log.txt 2>&1 &
           fi
-          sleep 8
-          cat playit_log.txt | grep -E "https://playit.gg/claim/|connected" || echo "Status: Waiting..."
+          sleep 10
+          cat playit_log.txt | grep -E "https://playit.gg/claim/|connected" || echo "Status: Waiting for connection..."
           echo "==== [STEP 4 COMPLETE] ✅ ===="
 
       # --- STEP 5: サーバー最終起動 ---
       - name: "Step 5: 🎮 Minecraft Bedrock Server 起動！"
+        working-directory: ./bds
         run: |
           echo "==== [STEP 5 START] ===="
-          cd bds
-          # 実行ファイルが直接置かれているので、そのまま叩く！
+          echo "Current Directory: $(pwd)"
+          echo "Files in current dir: $(ls)"
+          
+          # 実行！
           echo "Executing: LD_LIBRARY_PATH=. ./bedrock_server"
           LD_LIBRARY_PATH=. ./bedrock_server
+          
           echo "==== [STEP 5 FINISHED] 🏁 ===="
