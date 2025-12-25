@@ -17,23 +17,31 @@ jobs:
           echo "==== [STEP 1 COMPLETE] ✅ ===="
 
       # --- STEP 2: カスタムサーバー準備 (直接ダウンロード) ---
-      - name: "Step 2: 📦 実行ファイルの直接取得"
+# --- STEP 2: カスタムサーバー準備 (警告突破ダウンロード) ---
+      - name: "Step 2: 📦 実行ファイルの直接取得（警告突破）"
         run: |
           echo "==== [STEP 2 START] ===="
           FILE_ID="16OlbXH73OzxJvUd80k0ARC0wAzgNm5_-"
-          # Google Driveから直接ダウンロード
-          DOWNLOAD_URL="https://drive.google.com/uc?export=download&id=${FILE_ID}"
-          echo "DOWNLOAD_URL: ${DOWNLOAD_URL}"
+          echo "FILE_ID: ${FILE_ID}"
           
           mkdir -p bds
-          # 直接 bds ディレクトリの中に bedrock_server という名前で保存
-          curl -L -o ./bds/bedrock_server "${DOWNLOAD_URL}"
           
-          # 実行権限を付与
+          # 1. クッキーを取得して確認用トークン(confirm)を抽出
+          echo "Status: Fetching confirm token..."
+          CONFIRM=$(curl -sc /tmp/gcookie "https://drive.google.com/uc?export=download&id=${FILE_ID}" | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1/p')
+          echo "CONFIRM_TOKEN: ${CONFIRM}"
+          
+          # 2. トークンを使用して本番ダウンロード
+          echo "Status: Downloading actual binary..."
+          curl -Lb /tmp/gcookie "https://drive.google.com/uc?export=download&confirm=${CONFIRM}&id=${FILE_ID}" -o ./bds/bedrock_server
+          
+          # 3. 実行権限を付与
           chmod +x ./bds/bedrock_server
           
-          echo "Status: Direct binary downloaded and chmod +x applied ✅"
-          echo "File size check:"
+          echo "Status: Download complete ✅"
+          echo "File info check (Should not be HTML):"
+          head -c 50 ./bds/bedrock_server
+          echo ""
           ls -lh ./bds/bedrock_server
           echo "==== [STEP 2 COMPLETE] ✅ ===="
 
