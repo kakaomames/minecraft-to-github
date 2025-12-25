@@ -12,31 +12,29 @@ jobs:
       - name: "Step 1: 🏗️ 基礎インフラの整備"
         run: |
           echo "==== [STEP 1 START] ===="
-          echo "Action: Installing OS dependencies..."
-          sudo apt-get update && sudo apt-get install -y libcurl4 curl unzip
-          
-          working_dir=$(pwd)
-          echo "working_dir: ${working_dir}"
+          sudo apt-get update && sudo apt-get install -y libcurl4 curl
+          echo "Status: OS dependencies installed ✅"
           echo "==== [STEP 1 COMPLETE] ✅ ===="
 
-      # --- STEP 2: カスタムサーバー準備 ---
-      - name: "Step 2: 📦 カスタムサーバーのダウンロード・解凍"
+      # --- STEP 2: カスタムサーバー準備 (直接ダウンロード) ---
+      - name: "Step 2: 📦 実行ファイルの直接取得"
         run: |
           echo "==== [STEP 2 START] ===="
-          # 隊員提供のIDを使用して、より安定したURLを構築
           FILE_ID="16OlbXH73OzxJvUd80k0ARC0wAzgNm5_-"
+          # Google Driveから直接ダウンロード
           DOWNLOAD_URL="https://drive.google.com/uc?export=download&id=${FILE_ID}"
           echo "DOWNLOAD_URL: ${DOWNLOAD_URL}"
           
-          # ダウンロード実行
-          curl -L -o bds_custom.zip "${DOWNLOAD_URL}"
-          echo "Status: Download finished."
-          
-          # 解凍フェーズ
           mkdir -p bds
-          unzip bds_custom.zip -d bds
+          # 直接 bds ディレクトリの中に bedrock_server という名前で保存
+          curl -L -o ./bds/bedrock_server "${DOWNLOAD_URL}"
+          
+          # 実行権限を付与
           chmod +x ./bds/bedrock_server
-          echo "Status: Server binary path is ./bds/bedrock_server"
+          
+          echo "Status: Direct binary downloaded and chmod +x applied ✅"
+          echo "File size check:"
+          ls -lh ./bds/bedrock_server
           echo "==== [STEP 2 COMPLETE] ✅ ===="
 
       # --- STEP 3: 通信兵(playit.gg)の配備 ---
@@ -44,43 +42,32 @@ jobs:
         run: |
           echo "==== [STEP 3 START] ===="
           PLAYIT_DL_URL="https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64"
-          echo "PLAYIT_DL_URL: ${PLAYIT_DL_URL}"
-          
           curl -SsL -o playit ${PLAYIT_DL_URL}
           chmod +x playit
-          
-          playit_version=$(./playit --version)
-          echo "playit_version: ${playit_version}"
+          echo "Status: playit-agent ready ✅"
           echo "==== [STEP 3 COMPLETE] ✅ ===="
 
-      # --- STEP 4: トンネル開通(バックグラウンド) ---
-      - name: "Step 4: ⚡ トンネル開通＆シークレット認証"
+      # --- STEP 4: トンネル開通 ---
+      - name: "Step 4: ⚡ トンネル開通プロセス"
         env:
           PLAYIT_SECRET: ${{ secrets.PLAYIT_SECRET }}
         run: |
           echo "==== [STEP 4 START] ===="
           if [ -z "$PLAYIT_SECRET" ]; then
-            echo "Mode: [INITIAL SETUP] - No secret found in GitHub Secrets."
             ./playit > playit_log.txt 2>&1 &
           else
-            echo "Mode: [AUTHENTICATED] - Using PLAYIT_SECRET."
             ./playit --secret "$PLAYIT_SECRET" > playit_log.txt 2>&1 &
           fi
-          
-          sleep 8 # 接続待ち
-          echo "--- Playit Connection Logs ---"
-          cat playit_log.txt | grep -E "https://playit.gg/claim/|connected" || echo "Status: Processing..."
-          echo "------------------------------"
+          sleep 8
+          cat playit_log.txt | grep -E "https://playit.gg/claim/|connected" || echo "Status: Waiting..."
           echo "==== [STEP 4 COMPLETE] ✅ ===="
 
       # --- STEP 5: サーバー最終起動 ---
       - name: "Step 5: 🎮 Minecraft Bedrock Server 起動！"
         run: |
           echo "==== [STEP 5 START] ===="
-          echo "Command: LD_LIBRARY_PATH=. ./bedrock_server"
-          
           cd bds
-          # サーバーを起動
+          # 実行ファイルが直接置かれているので、そのまま叩く！
+          echo "Executing: LD_LIBRARY_PATH=. ./bedrock_server"
           LD_LIBRARY_PATH=. ./bedrock_server
-          
           echo "==== [STEP 5 FINISHED] 🏁 ===="
