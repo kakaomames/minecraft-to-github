@@ -1,0 +1,63 @@
+name: Minecraft Server Engine
+
+on:
+  repository_dispatch:
+    types: [start_minecraft]
+
+jobs:
+  run-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚀 カスタムサーバー起動＆トンネル開通
+        env:
+          PLAYIT_SECRET: ${{ secrets.PLAYIT_SECRET }}
+        run: |
+          echo "Gemini programming隊、カスタムサーバー展開フェーズ開始！ 🫡"
+          
+          # 1. 依存ライブラリのインストール
+          sudo apt-get update && sudo apt-get install -y libcurl4
+          echo "Status: OS dependencies installed ✅"
+          
+          # 2. カスタムBedrockサーバーのダウンロード
+          # 隊員から提供されたURLを使用
+          BDS_DRIVE_URL="https://drive.usercontent.google.com/download?id=16OlbXH73OzxJvUd80k0ARC0wAzgNm5_-&export=download&confirm=t"
+          echo "BDS_DRIVE_URL: ${BDS_DRIVE_URL}"
+          
+          # 警告をバイパスしてダウンロードを試行
+          curl -L -o bds_custom.zip "${BDS_DRIVE_URL}"
+          
+          # 解凍
+          mkdir -p bds
+          unzip bds_custom.zip -d bds
+          chmod +x ./bds/bedrock_server
+          echo "Status: Custom Bedrock Server extracted ✅"
+          
+          # 3. playit本体の準備
+          PLAYIT_URL="https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64"
+          echo "PLAYIT_URL: ${PLAYIT_URL}"
+          
+          curl -SsL -o playit ${PLAYIT_URL}
+          chmod +x playit
+          echo "Status: playit-agent prepared ✅"
+
+          # 4. playitの起動
+          echo "トンネル接続を開始します..."
+          if [ -z "$PLAYIT_SECRET" ]; then
+            echo "Status: No secret found. Starting in setup mode."
+            ./playit > playit_log.txt 2>&1 &
+          else
+            echo "Status: Secret found. Authenticating..."
+            ./playit --secret "$PLAYIT_SECRET" > playit_log.txt 2>&1 &
+          fi
+          
+          # 5. 待機とログ確認
+          sleep 5
+          echo "--- playit status ---"
+          cat playit_log.txt | grep "https://playit.gg/claim/" || echo "Running..."
+          echo "---------------------"
+          
+          # 6. カスタムサーバー起動
+          echo "カスタムマイクラサーバー(BDS)を起動します！"
+          cd bds
+          # もし実行ファイル名が異なる場合はここを調整
+          LD_LIBRARY_PATH=. ./bedrock_server
